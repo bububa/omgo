@@ -15,9 +15,9 @@ const (
 
 // buildURL builds the URL for a forecast request.
 func (r *ForecastRequest) buildURL(baseURL, apiKey string) string {
-	url := baseURL
+	target := baseURL
 	if r.ensemble {
-		url = ensembleBaseURL
+		target = ensembleBaseURL
 	}
 	params := url.Values{}
 
@@ -105,7 +105,7 @@ func (r *ForecastRequest) buildURL(baseURL, apiKey string) string {
 		params.Set("apikey", apiKey)
 	}
 
-	return baseURL + "?" + params.Encode()
+	return target + "?" + params.Encode()
 }
 
 // buildURL builds the URL for a historical request.
