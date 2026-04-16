@@ -27,6 +27,9 @@ type rawResponse struct {
 
 	Daily      json.RawMessage `json:"daily,omitempty"`
 	DailyUnits *DailyUnits     `json:"daily_units,omitempty"`
+
+	DailyEnsemble      json.RawMessage   `json:"daily_ensemble,omitempty"`
+	DailyEnsembleUnits map[string]string `json:"daily_ensemble_units,omitempty"`
 }
 
 // rawCurrent represents the raw current weather data.
@@ -100,6 +103,7 @@ func parseWeatherResponse(body []byte) (*Weather, error) {
 		HourlyUnits:          raw.HourlyUnits,
 		Minutely15Units:      raw.Minutely15Units,
 		DailyUnits:           raw.DailyUnits,
+		DailyEnsembleUnits:   raw.DailyEnsembleUnits,
 	}
 
 	// Parse current weather
@@ -136,6 +140,15 @@ func parseWeatherResponse(body []byte) (*Weather, error) {
 			return nil, err
 		}
 		weather.Daily = daily
+	}
+
+	// Parse daily ensemble data (from /v1/ensemble)
+	if len(raw.DailyEnsemble) > 0 {
+		ensemble, err := parseDailyEnsemble(raw.DailyEnsemble, loc)
+		if err != nil {
+			return nil, err
+		}
+		weather.DailyEnsemble = ensemble
 	}
 
 	return weather, nil
@@ -261,4 +274,68 @@ func parseDaily(data json.RawMessage, loc *time.Location) (*DailyData, error) {
 	}
 
 	return daily, nil
+}
+
+// rawDailyEnsemble represents the raw API response for daily ensemble data.
+type rawDailyEnsemble struct {
+	Time                         []string    `json:"time"`
+	Temperature2mMax             [][]float64 `json:"temperature_2m_max,omitempty"`
+	Temperature2mMin             [][]float64 `json:"temperature_2m_min,omitempty"`
+	Temperature2mMean            [][]float64 `json:"temperature_2m_mean,omitempty"`
+	ApparentTemperatureMax       [][]float64 `json:"apparent_temperature_max,omitempty"`
+	ApparentTemperatureMin       [][]float64 `json:"apparent_temperature_min,omitempty"`
+	ApparentTemperatureMean      [][]float64 `json:"apparent_temperature_mean,omitempty"`
+	PrecipitationSum             []float64   `json:"precipitation_sum,omitempty"`
+	RainSum                      []float64   `json:"rain_sum,omitempty"`
+	ShowersSum                   []float64   `json:"showers_sum,omitempty"`
+	SnowfallSum                  []float64   `json:"snowfall_sum,omitempty"`
+	PrecipitationHours           []float64   `json:"precipitation_hours,omitempty"`
+	PrecipitationProbabilityMax  []float64   `json:"precipitation_probability_max,omitempty"`
+	PrecipitationProbabilityMin  []float64   `json:"precipitation_probability_min,omitempty"`
+	PrecipitationProbabilityMean []float64   `json:"precipitation_probability_mean,omitempty"`
+	WindSpeed10mMax              []float64   `json:"wind_speed_10m_max,omitempty"`
+	WindGusts10mMax              []float64   `json:"wind_gusts_10m_max,omitempty"`
+	WindDirection10mDominant     []float64   `json:"wind_direction_10m_dominant,omitempty"`
+	ShortwaveRadiationSum        []float64   `json:"shortwave_radiation_sum,omitempty"`
+	ET0FAOEvapotranspiration     []float64   `json:"et0_fao_evapotranspiration,omitempty"`
+	UVIndexMax                   []float64   `json:"uv_index_max,omitempty"`
+	UVIndexClearSkyMax           []float64   `json:"uv_index_clear_sky_max,omitempty"`
+}
+
+// parseDailyEnsemble parses ensemble daily weather data with 2D member arrays.
+func parseDailyEnsemble(data json.RawMessage, loc *time.Location) (*DailyEnsembleData, error) {
+	var raw rawDailyEnsemble
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+
+	times, err := parseDateArray(raw.Time, loc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DailyEnsembleData{
+		Times:                        times,
+		Temperature2mMax:             raw.Temperature2mMax,
+		Temperature2mMin:             raw.Temperature2mMin,
+		Temperature2mMean:            raw.Temperature2mMean,
+		ApparentTemperatureMax:       raw.ApparentTemperatureMax,
+		ApparentTemperatureMin:       raw.ApparentTemperatureMin,
+		ApparentTemperatureMean:      raw.ApparentTemperatureMean,
+		PrecipitationSum:             raw.PrecipitationSum,
+		RainSum:                      raw.RainSum,
+		ShowersSum:                   raw.ShowersSum,
+		SnowfallSum:                  raw.SnowfallSum,
+		PrecipitationHours:           raw.PrecipitationHours,
+		PrecipitationProbabilityMax:  raw.PrecipitationProbabilityMax,
+		PrecipitationProbabilityMin:  raw.PrecipitationProbabilityMin,
+		PrecipitationProbabilityMean: raw.PrecipitationProbabilityMean,
+		WindSpeed10mMax:              raw.WindSpeed10mMax,
+		WindGusts10mMax:              raw.WindGusts10mMax,
+		WindDirection10mDominant:     raw.WindDirection10mDominant,
+		ShortwaveRadiationSum:        raw.ShortwaveRadiationSum,
+		ET0FAOEvapotranspiration:     raw.ET0FAOEvapotranspiration,
+		UVIndexMax:                   raw.UVIndexMax,
+		UVIndexClearSkyMax:           raw.UVIndexClearSkyMax,
+	}, nil
 }

@@ -10,10 +10,15 @@ import (
 const (
 	forecastBaseURL   = "https://api.open-meteo.com/v1/forecast"
 	historicalBaseURL = "https://archive-api.open-meteo.com/v1/archive"
+	ensembleBaseURL   = "https://ensemble-api.open-meteo.com/v1/ensemble"
 )
 
 // buildURL builds the URL for a forecast request.
 func (r *ForecastRequest) buildURL(baseURL, apiKey string) string {
+	url := baseURL
+	if r.ensemble {
+		url = ensembleBaseURL
+	}
 	params := url.Values{}
 
 	// Location

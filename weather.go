@@ -31,4 +31,8 @@ type Weather struct {
 	// Daily data
 	Daily      *DailyData  `json:"-"` // parsed separately
 	DailyUnits *DailyUnits `json:"daily_units,omitempty"`
+
+	// Ensemble daily data (from /v1/ensemble endpoint)
+	DailyEnsemble      *DailyEnsembleData `json:"-"` // parsed separately
+	DailyEnsembleUnits map[string]string  `json:"daily_ensemble_units,omitempty"`
 }

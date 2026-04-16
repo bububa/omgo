@@ -37,6 +37,9 @@ type ForecastRequest struct {
 	// Solar radiation options (for global_tilted_irradiance)
 	tilt    *float64
 	azimuth *float64
+
+	// Ensemble options
+	ensemble bool
 }
 
 // NewForecastRequest creates a new ForecastRequest for the given coordinates.
@@ -169,6 +172,19 @@ func (r *ForecastRequest) WithTilt(degrees float64) *ForecastRequest {
 func (r *ForecastRequest) WithAzimuth(degrees float64) *ForecastRequest {
 	r.azimuth = &degrees
 	return r
+}
+
+// WithEnsemble enables multi-member ensemble forecast data.
+// When enabled, the request targets the /v1/ensemble endpoint which returns
+// results from 31 model members as 2D arrays: [member][time].
+func (r *ForecastRequest) WithEnsemble() *ForecastRequest {
+	r.ensemble = true
+	return r
+}
+
+// IsEnsemble returns true if this is an ensemble forecast request.
+func (r *ForecastRequest) IsEnsemble() bool {
+	return r.ensemble
 }
 
 // HistoricalRequest represents a request to the Historical API.
